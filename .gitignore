@@ -84,3 +84,29 @@ debug_*.py
 # Setup files (keep local but don't push to GitHub)
 setup_ubuntu.sh
 manage.sh
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Cache directories
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.cache/
+.pytest_cache/
+
+# Logs
+logs/
+*.log
+
+# Docker
+.dockerignore
