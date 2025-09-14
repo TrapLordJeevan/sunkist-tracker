@@ -11,6 +11,7 @@ Compares prices per litre and checks availability.
 
 import asyncio
 import json
+import logging
 from datetime import datetime
 from typing import List, Dict, Optional
 import sys
@@ -18,6 +19,11 @@ import os
 
 # Add the current directory to Python path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from database import PriceDatabase
+from logger_config import setup_logging
+
+logger = logging.getLogger(__name__)
 
 from scrapers.coles_scraper import ColesScraper
 from scrapers.woolworths_scraper import WoolworthsScraper
@@ -36,6 +42,7 @@ class SunkistTracker:
         
         self.price_calculator = PriceCalculator()
         self.formatter = ResultsFormatter()
+        self.database = PriceDatabase()
     
     async def find_cheapest_sunkist(self) -> Dict:
         """Main method to find the cheapest target products across all retailers."""
@@ -235,12 +242,14 @@ class SunkistTracker:
 
 async def main():
     """Main entry point for the application."""
-        print("Sunkist Price Tracker")
-        print("Finding the cheapest deals across Coles, Woolworths, and Amazon...")
-        print("Location: Your local area")
-        print("Preference: Cans over bottles (up to $2.50/L for cans)")
-        print("Excluding: Syrups, concentrates, and non-soda products")
-    print()
+    # Setup logging
+    setup_logging()
+    
+    logger.info("Sunkist Price Tracker")
+    logger.info("Finding the cheapest deals across Coles, Woolworths, and Amazon...")
+    logger.info("Location: Your local area")
+    logger.info("Preference: Cans over bottles (up to $2.50/L for cans)")
+    logger.info("Excluding: Syrups, concentrates, and non-soda products")
     
     tracker = SunkistTracker()
     
@@ -248,15 +257,25 @@ async def main():
         results = await tracker.find_cheapest_sunkist()
         tracker.display_results(results)
         
+        # Save results to database
+        all_products = []
+        for retailer_data in results.get('retailers', {}).values():
+            if 'products' in retailer_data:
+                all_products.extend(retailer_data['products'])
+        
+        if all_products:
+            saved_count = tracker.database.save_prices(all_products)
+            logger.info(f"Saved {saved_count} prices to database")
+        
         # Save results to file
-        with open('sunkist_results.json', 'w') as f:
+        with open('latest_results.json', 'w') as f:
             json.dump(results, f, indent=2)
-        print(f"\n💾 Results saved to sunkist_results.json")
+        logger.info("Results saved to latest_results.json")
         
     except KeyboardInterrupt:
-        print("\n\n⏹️ Search cancelled by user")
+        logger.info("Search cancelled by user")
     except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
+        logger.error(f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":

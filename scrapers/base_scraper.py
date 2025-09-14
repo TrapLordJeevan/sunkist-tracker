@@ -4,6 +4,7 @@ Base scraper class with common functionality for all retailers.
 
 import asyncio
 import re
+import logging
 from abc import ABC, abstractmethod
 from typing import List, Dict, Optional
 import requests
@@ -15,6 +16,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
+from product_schema import ProductSchema
+
+logger = logging.getLogger(__name__)
 
 
 class BaseScraper(ABC):
@@ -263,6 +267,24 @@ class BaseScraper(ABC):
     async def search_target_products(self) -> Dict:
         """Search for target products (Sunkist Zero Sugar, Fanta Zero Sugar, Pepsi Max Mango)."""
         pass
+    
+    def validate_and_normalize_products(self, raw_products: List[Dict], store: str) -> List[Dict]:
+        """Validate and normalize a list of raw products to standard schema."""
+        validated_products = []
+        
+        for raw_product in raw_products:
+            try:
+                normalized = ProductSchema.normalize_product(raw_product, store)
+                if normalized:
+                    validated_products.append(normalized)
+                else:
+                    logger.warning(f"Failed to normalize product: {raw_product.get('name', 'Unknown')}")
+            except Exception as e:
+                logger.error(f"Error processing product: {e}")
+                continue
+        
+        logger.info(f"Validated {len(validated_products)}/{len(raw_products)} products for {store}")
+        return validated_products
     
     def __del__(self):
         """Cleanup when object is destroyed."""

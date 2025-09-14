@@ -7,15 +7,21 @@ Run this on your Ubuntu server to view results via web browser.
 import asyncio
 import json
 import os
+import logging
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request
 from main import SunkistTracker
+from database import PriceDatabase
+from logger_config import setup_logging
+
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
 # Global variable to store latest results
 latest_results = None
 last_updated = None
+database = PriceDatabase()
 
 @app.route('/')
 def index():
@@ -65,6 +71,42 @@ def status():
         'last_updated': last_updated,
         'has_data': latest_results is not None
     })
+
+@app.route('/api/history')
+def price_history():
+    """Get price history from database."""
+    try:
+        limit = request.args.get('limit', 100, type=int)
+        products = database.get_latest_prices(limit)
+        return jsonify({
+            'status': 'success',
+            'products': products,
+            'count': len(products)
+        })
+    except Exception as e:
+        logger.error(f"Error getting price history: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/best-deals')
+def best_deals():
+    """Get best deals from database."""
+    try:
+        limit = request.args.get('limit', 10, type=int)
+        deals = database.get_best_deals(limit)
+        return jsonify({
+            'status': 'success',
+            'deals': deals,
+            'count': len(deals)
+        })
+    except Exception as e:
+        logger.error(f"Error getting best deals: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 
 if __name__ == '__main__':
     # Load existing results if available

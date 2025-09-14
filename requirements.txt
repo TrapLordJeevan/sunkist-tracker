@@ -8,3 +8,7 @@ selenium-wire==5.1.0
 flask==3.0.0
 schedule==1.2.0
 python-dotenv==1.0.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
