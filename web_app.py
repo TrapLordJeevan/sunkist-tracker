@@ -10,7 +10,6 @@ import os
 import logging
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request
-from main import SunkistTracker
 from database import PriceDatabase
 from logger_config import setup_logging
 
@@ -45,6 +44,9 @@ def refresh_results():
     global latest_results, last_updated
     
     try:
+        # Lazy import to avoid Selenium import issues at startup
+        from main import SunkistTracker
+        
         # Run the price tracker
         tracker = SunkistTracker()
         results = asyncio.run(tracker.find_cheapest_sunkist())
@@ -58,6 +60,7 @@ def refresh_results():
             'last_updated': last_updated
         })
     except Exception as e:
+        logger.error(f"Error in refresh: {e}")
         return jsonify({
             'status': 'error',
             'message': str(e)
@@ -77,11 +80,18 @@ def price_history():
     """Get price history from database."""
     try:
         limit = request.args.get('limit', 100, type=int)
-        products = database.get_latest_prices(limit)
+        sort_by = request.args.get('sort', 'newest')  # newest, price_per_litre
+        
+        if sort_by == 'price_per_litre':
+            products = database.get_latest_prices(limit, sort_by='price_per_litre')
+        else:
+            products = database.get_latest_prices(limit, sort_by='newest')
+            
         return jsonify({
             'status': 'success',
             'products': products,
-            'count': len(products)
+            'count': len(products),
+            'sort_by': sort_by
         })
     except Exception as e:
         logger.error(f"Error getting price history: {e}")

@@ -97,14 +97,21 @@ class PriceDatabase:
         logger.info(f"Saved {saved_count} prices to database")
         return saved_count
     
-    def get_latest_prices(self, limit: int = 100) -> List[Dict]:
+    def get_latest_prices(self, limit: int = 100, sort_by: str = 'newest') -> List[Dict]:
         """Get the latest prices from the database."""
         with self._get_connection() as conn:
-            cursor = conn.execute("""
-                SELECT * FROM prices 
-                ORDER BY created_at DESC 
-                LIMIT ?
-            """, (limit,))
+            if sort_by == 'price_per_litre':
+                cursor = conn.execute("""
+                    SELECT * FROM prices 
+                    ORDER BY price_per_litre ASC, created_at DESC 
+                    LIMIT ?
+                """, (limit,))
+            else:  # newest
+                cursor = conn.execute("""
+                    SELECT * FROM prices 
+                    ORDER BY created_at DESC 
+                    LIMIT ?
+                """, (limit,))
             
             return [dict(row) for row in cursor.fetchall()]
     

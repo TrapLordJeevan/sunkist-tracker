@@ -5,6 +5,9 @@ Retry utilities with exponential backoff and randomized headers.
 import time
 import random
 import logging
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from typing import Dict, List, Optional
 from functools import wraps
 
