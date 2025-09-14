@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunkist Price Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+        
+        .status-indicator.error {
+            background: #dc3545;
+        }
+        
+        .status-indicator.warning {
+            background: #ffc107;
+        }
+        
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .retailer-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .retailer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .retailer-name {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .product-count {
+            background: #007bff;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #007bff;
+        }
+        
+        .product-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .product-price {
+            font-size: 1.2em;
+            color: #28a745;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .product-details {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+        
+        .product-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .status-in-stock {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-out-of-stock {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .best-deals {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .best-deals h2 {
+            color: white;
+        }
+        
+        .deal-item {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .deal-price {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Sunkist Price Tracker</h1>
+            <p>Find the best deals on Sunkist Zero Sugar, Fanta Zero Sugar & Pepsi Max Mango</p>
+        </div>
+        
+        <div class="controls">
+            <div class="status">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span id="statusText">Loading...</span>
+            </div>
+            <button class="btn" id="refreshBtn" onclick="refreshResults()">Refresh Prices</button>
+        </div>
+        
+        <div class="content" id="content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading latest prices...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isLoading = false;
+        
+        async function loadResults() {
+            try {
+                const response = await fetch('/api/results');
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.results) {
+                    displayResults(data.results, data.last_updated);
+                    updateStatus('success', `Last updated: ${data.last_updated || 'Unknown'}`);
+                } else {
+                    displayNoData();
+                    updateStatus('warning', 'No data available');
+                }
+            } catch (error) {
+                console.error('Error loading results:', error);
+                displayError('Failed to load results');
+                updateStatus('error', 'Connection error');
+            }
+        }
+        
+        async function refreshResults() {
+            if (isLoading) return;
+            
+            isLoading = true;
+            const btn = document.getElementById('refreshBtn');
+            const originalText = btn.textContent;
+            
+            btn.textContent = '🔄 Checking...';
+            btn.disabled = true;
+            updateStatus('warning', 'Checking prices...');
+            
+            try {
+                const response = await fetch('/api/refresh', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    updateStatus('success', `Updated: ${data.last_updated}`);
+                    await loadResults();
+                } else {
+                    throw new Error(data.message || 'Refresh failed');
+                }
+            } catch (error) {
+                console.error('Error refreshing:', error);
+                updateStatus('error', 'Refresh failed');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                isLoading = false;
+            }
+        }
+        
+        function updateStatus(type, message) {
+            const indicator = document.getElementById('statusIndicator');
+            const text = document.getElementById('statusText');
+            
+            indicator.className = `status-indicator ${type}`;
+            text.textContent = message;
+        }
+        
+        function displayResults(results, lastUpdated) {
+            const content = document.getElementById('content');
+            
+            if (!results || !results.retailers) {
+                displayNoData();
+                return;
+            }
+            
+            let html = '';
+            
+            // Best deals section
+            if (results.best_deals) {
+                html += `
+                    <div class="section best-deals">
+                        <h2>Best Deals</h2>
+                        <div class="deal-item">
+                            <div class="deal-price">${results.best_deals.cheapest_can || 'N/A'}</div>
+                            <div>Best Can Deal</div>
+                        </div>
+                        <div class="deal-item">
+                            <div class="deal-price">${results.best_deals.cheapest_bottle || 'N/A'}</div>
+                            <div>Best Bottle Deal</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Retailer sections
+            html += '<div class="section"><h2>All Products by Retailer</h2>';
+            
+            for (const [retailer, data] of Object.entries(results.retailers)) {
+                if (data.error) {
+                    html += `
+                        <div class="retailer-section">
+                            <div class="retailer-header">
+                                <div class="retailer-name">${retailer}</div>
+                                <div class="product-count">Error</div>
+                            </div>
+                            <div class="error">${data.error}</div>
+                        </div>
+                    `;
+                    continue;
+                }
+                
+                const products = data.products || [];
+                html += `
+                    <div class="retailer-section">
+                        <div class="retailer-header">
+                            <div class="retailer-name">${retailer}</div>
+                            <div class="product-count">${products.length} products</div>
+                        </div>
+                        <div class="product-grid">
+                `;
+                
+                products.forEach(product => {
+                    const statusClass = product.in_stock ? 'status-in-stock' : 'status-out-of-stock';
+                    const statusText = product.in_stock ? 'In Stock' : 'Out of Stock';
+                    
+                    html += `
+                        <div class="product-card">
+                            <div class="product-name">${product.name}</div>
+                            <div class="product-price">$${product.price.toFixed(2)}</div>
+                            <div class="product-details">${product.size} - $${product.price_per_litre.toFixed(2)}/L</div>
+                            <div class="product-status ${statusClass}">${statusText}</div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div></div>';
+            }
+            
+            html += '</div>';
+            content.innerHTML = html;
+        }
+        
+        function displayNoData() {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="section">
+                    <h2>📊 No Data Available</h2>
+                    <p>No price data is currently available. Click "Refresh Prices" to run a new price check.</p>
+                </div>
+            `;
+        }
+        
+        function displayError(message) {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="error">
+                    <h3>❌ Error</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+        
+        // Load results on page load
+        document.addEventListener('DOMContentLoaded', loadResults);
+        
+        // Auto-refresh every 5 minutes
+        setInterval(loadResults, 5 * 60 * 1000);
+    </script>
+</body>
+</html>
